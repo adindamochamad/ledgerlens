@@ -1,0 +1,7 @@
+{
+  "$schema": "anna-app-identity/v1",
+  "host": "https://anna.partners",
+  "app_id": 17,
+  "slug": "ledgerlens",
+  "first_published_at": "2026-06-15T14:47:09.465Z"
+}

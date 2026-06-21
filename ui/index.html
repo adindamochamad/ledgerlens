@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LedgerLens — Receipt & Bank Statement Reconciliation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Top bar — inspirasi Mercury / Ramp: institutional, clean -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <div class="logo-mark" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <circle cx="11" cy="11" r="7"/>
+          <path d="M20 20l-3.5-3.5"/>
+          <path d="M8 11h6M11 8v6"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-name">LedgerLens</h1>
+        <p class="brand-tagline">Receipt &amp; Bank Reconciliation</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span class="trust-chip">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Local-first
+      </span>
+      <span id="status-koneksi" class="badge badge-menunggu">Connecting…</span>
+    </div>
+  </header>
+
+  <div class="shell">
+
+    <!-- Sidebar workflow — inspirasi Finzo reconciliation workspace -->
+    <aside class="sidebar">
+
+      <div class="sidebar-intro">
+        <p class="sidebar-label">Workflow</p>
+        <p class="sidebar-hint">Match receipts to bank transactions. All processing stays on your machine.</p>
+      </div>
+
+      <ol class="stepper">
+
+        <!-- Step 1 -->
+        <li class="step" id="langkah-folder">
+          <div class="step-indicator">
+            <span class="step-num">1</span>
+          </div>
+          <div class="step-body">
+            <h2 class="step-title">Receipt Folder</h2>
+            <p class="step-desc">Scan PDF and photo receipts from a local folder.</p>
+
+            <div class="field-row">
+              <input
+                type="text"
+                id="input-path-folder"
+                class="input-text"
+                placeholder="/Users/you/Documents/Receipts"
+                spellcheck="false"
+              />
+              <button id="tombol-scan-folder" class="btn btn-primary btn-icon" type="button" title="Scan folder">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+                Scan
+              </button>
+            </div>
+
+            <div id="hasil-scan-folder" class="result-chip tersembunyi">
+              <div class="chip-grid">
+                <div class="chip-stat">
+                  <span class="chip-value" id="jumlah-struk">—</span>
+                  <span class="chip-label">Receipts</span>
+                </div>
+                <div class="chip-stat">
+                  <span class="chip-value" id="jumlah-csv">—</span>
+                  <span class="chip-label">CSV</span>
+                </div>
+                <div class="chip-stat">
+                  <span class="chip-value" id="ukuran-total">—</span>
+                  <span class="chip-label">KB</span>
+                </div>
+              </div>
+              <div id="peringatan-folder" class="alert alert-warn tersembunyi"></div>
+            </div>
+          </div>
+        </li>
+
+        <!-- Step 2 -->
+        <li class="step" id="langkah-csv">
+          <div class="step-indicator">
+            <span class="step-num">2</span>
+          </div>
+          <div class="step-body">
+            <h2 class="step-title">Bank Statement</h2>
+            <p class="step-desc">Load your bank statement CSV export.</p>
+
+            <div class="field-row">
+              <input
+                type="text"
+                id="input-path-csv"
+                class="input-text"
+                placeholder="/Users/you/Downloads/statement.csv"
+                spellcheck="false"
+              />
+              <button id="tombol-muat-csv" class="btn btn-secondary btn-icon" type="button" title="Load CSV">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Load
+              </button>
+            </div>
+
+            <div id="hasil-muat-csv" class="result-chip tersembunyi">
+              <div class="chip-grid chip-grid-2">
+                <div class="chip-stat">
+                  <span class="chip-value" id="jumlah-transaksi-bank">—</span>
+                  <span class="chip-label">Transactions</span>
+                </div>
+                <div class="chip-stat">
+                  <span class="chip-value chip-value-mono" id="total-debit">—</span>
+                  <span class="chip-label">Total Debit</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </li>
+
+        <!-- Step 3 -->
+        <li class="step" id="langkah-rekonsiliasi">
+          <div class="step-indicator">
+            <span class="step-num">3</span>
+          </div>
+          <div class="step-body">
+            <h2 class="step-title">Reconcile</h2>
+            <p class="step-desc">Anna AI matches receipts to transactions and flags exceptions.</p>
+
+            <button id="tombol-mulai-rekonsiliasi" class="btn btn-accent btn-block" type="button" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              Start Reconciliation
+            </button>
+
+            <div id="progres-rekonsiliasi" class="progress-block tersembunyi">
+              <p class="progress-label" id="label-progres">Processing…</p>
+              <div class="progress-track">
+                <div class="progress-fill" id="isi-progres"></div>
+              </div>
+            </div>
+          </div>
+        </li>
+
+      </ol>
+    </aside>
+
+    <!-- Main workspace — KPI strip + tabs (Ramp-style summary-first) -->
+    <main class="workspace">
+
+      <!-- KPI metrics — muncul setelah rekonsiliasi -->
+      <section id="panel-statistik" class="metrics-strip tersembunyi">
+        <div class="metrics-header">
+          <div>
+            <h2 class="metrics-title">Reconciliation Summary</h2>
+            <p class="metrics-sub">Exception-based review — focus on what needs attention.</p>
+          </div>
+          <button
+            id="tombol-kirim-chat"
+            class="btn btn-ghost btn-icon"
+            type="button"
+            onclick="kirimRingkasanKeChat()"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            Send Report to Chat
+          </button>
+        </div>
+
+        <div class="metrics-grid">
+          <article class="metric-card metric-matched">
+            <div class="metric-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value" id="stat-cocok">0</span>
+              <span class="metric-label">Matched</span>
+            </div>
+          </article>
+          <article class="metric-card metric-no-receipt">
+            <div class="metric-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value" id="stat-tanpa-struk">0</span>
+              <span class="metric-label">No Receipt</span>
+            </div>
+          </article>
+          <article class="metric-card metric-review">
+            <div class="metric-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value" id="stat-ambigu">0</span>
+              <span class="metric-label">Needs Review</span>
+            </div>
+          </article>
+          <article class="metric-card metric-mismatch">
+            <div class="metric-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value" id="stat-mismatch">0</span>
+              <span class="metric-label">Mismatch</span>
+            </div>
+          </article>
+        </div>
+
+        <div id="banner-risiko" class="alert alert-danger tersembunyi">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span id="teks-risiko"></span>
+        </div>
+      </section>
+
+      <!-- Tab panels -->
+      <section class="workspace-body">
+
+        <nav class="tab-nav" role="tablist">
+          <button class="tab-tombol aktif" data-tab="semua" role="tab">All Transactions</button>
+          <button class="tab-tombol" data-tab="perlu-review" role="tab">
+            Needs Review
+            <span class="badge-tab tersembunyi" id="badge-review">0</span>
+          </button>
+          <button class="tab-tombol" data-tab="tanpa-struk" role="tab">No Receipt</button>
+          <button class="tab-tombol" data-tab="memori-vendor" role="tab">Vendor Memory</button>
+        </nav>
+
+        <!-- Tab: All Transactions -->
+        <div class="konten-tab aktif" id="tab-semua">
+          <div id="placeholder-tabel" class="empty-state">
+            <div class="empty-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+            </div>
+            <p class="empty-title">No transactions loaded yet</p>
+            <p class="empty-desc">Scan your receipt folder and load a bank CSV to begin reconciliation.</p>
+          </div>
+
+          <div id="kontainer-tabel-utama" class="tersembunyi">
+            <div class="toolbar-tabel">
+              <div class="search-wrap">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="filter-transaksi" class="input-filter" placeholder="Search transactions…" />
+              </div>
+              <select id="filter-status" class="select-filter">
+                <option value="">All statuses</option>
+                <option value="cocok">Matched</option>
+                <option value="tanpa_struk">No Receipt</option>
+                <option value="ambigu">Ambiguous</option>
+                <option value="mismatch">Mismatch</option>
+              </select>
+            </div>
+            <div class="wrapper-tabel">
+              <table class="tabel-transaksi" id="tabel-transaksi">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th class="th-right">Amount</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="isi-tabel-transaksi"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Needs Review -->
+        <div class="konten-tab" id="tab-perlu-review">
+          <div id="antrian-review-kosong" class="empty-state tersembunyi">
+            <div class="empty-icon empty-icon-success">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <p class="empty-title">All caught up</p>
+            <p class="empty-desc">Every transaction has been reviewed.</p>
+          </div>
+          <div id="kontainer-antrian-review">
+            <p class="section-lead">Confirm the category for each flagged transaction below.</p>
+            <div id="daftar-kartu-review"></div>
+          </div>
+        </div>
+
+        <!-- Tab: No Receipt -->
+        <div class="konten-tab" id="tab-tanpa-struk">
+          <div id="placeholder-tanpa-struk" class="empty-state">
+            <div class="empty-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <p class="empty-title">No missing receipts yet</p>
+            <p class="empty-desc">Transactions without receipt proof will appear here — highest audit risk.</p>
+          </div>
+          <div id="daftar-tanpa-struk" class="daftar-tanpa-struk tersembunyi"></div>
+        </div>
+
+        <!-- Tab: Vendor Memory -->
+        <div class="konten-tab" id="tab-memori-vendor">
+          <div class="section-header">
+            <h3 class="section-title">Known Vendors</h3>
+            <p class="section-lead">Vendor → category mappings learned from your past reviews.</p>
+          </div>
+          <div id="daftar-memori-vendor" class="daftar-memori">
+            <div class="empty-state empty-state-compact">
+              <div class="empty-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 6v6l4 2"/></svg>
+              </div>
+              <p class="empty-desc">Vendor memory loads automatically when connected.</p>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal review -->
+  <div id="modal-review" class="modal-overlay tersembunyi" role="dialog" aria-modal="true">
+    <div class="modal-konten">
+      <div class="modal-header">
+        <h3 id="modal-judul">Review Transaction</h3>
+        <button id="modal-tutup" class="btn-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-isi" id="modal-isi"></div>
+      <div class="modal-footer">
+        <button id="modal-simpan" class="btn btn-primary" type="button">Save &amp; Continue</button>
+        <button id="modal-lewati" class="btn btn-secondary" type="button">Skip</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="kontainer-toast" class="kontainer-toast" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

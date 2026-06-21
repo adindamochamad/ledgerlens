@@ -1,0 +1,11 @@
+# Dependensi Python untuk LedgerLens Tool
+# Install: pip install -r requirements.txt
+
+# Ekstraksi teks dari PDF (opsional, fallback ke base64 jika tidak ada)
+pdfplumber>=0.10.0
+
+# Alternatif parser PDF jika pdfplumber bermasalah
+# pypdf>=3.0.0
+
+# Pillow untuk validasi/resize gambar (opsional)
+Pillow>=10.0.0

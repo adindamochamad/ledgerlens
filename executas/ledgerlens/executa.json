@@ -1,0 +1,9 @@
+{
+  "slug": "ledgerlens",
+  "name": "LedgerLens",
+  "version": "0.2.0",
+  "executa_type": "tool",
+  "description": "Rekonsiliasi struk dan mutasi bank di mesin pengguna. Baca folder struk, parse CSV bank, simpan memori vendor.",
+  "tool_id": "tool-adindamochamad-ledgerlens-r2zhgf93",
+  "type": "python"
+}

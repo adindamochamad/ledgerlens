@@ -1,0 +1,9 @@
+{
+  "$schema": "anna-executa-identity/v1",
+  "host": "https://anna.partners",
+  "executa_id": 989,
+  "tool_id": "tool-adindamochamad-ledgerlens-r2zhgf93",
+  "slug": "ledgerlens",
+  "executa_type": "tool",
+  "first_published_at": "2026-06-15T14:47:43.225Z"
+}

@@ -1,0 +1,81 @@
+name: Build LedgerLens binaries
+
+on:
+  workflow_dispatch:
+
+jobs:
+  meta:
+    runs-on: ubuntu-latest
+    outputs:
+      tool_id: ${{ steps.read.outputs.tool_id }}
+      version: ${{ steps.read.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: read
+        run: |
+          TOOL_ID=$(python3 -c "import json; d=json.load(open('executas/ledgerlens/executa.json')); print(d['tool_id'])")
+          VERSION=$(python3 -c "import json; d=json.load(open('executas/ledgerlens/executa.json')); print(d['version'])")
+          echo "tool_id=$TOOL_ID" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+  build:
+    needs: meta
+    strategy:
+      matrix:
+        include:
+          - runner: macos-14
+            platform: darwin-arm64
+          - runner: macos-13
+            platform: darwin-x86_64
+          - runner: ubuntu-latest
+            platform: linux-x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          cd executas/ledgerlens
+          pip install pdfplumber Pillow pyinstaller
+
+      - name: Build binary
+        run: |
+          cd executas/ledgerlens
+          chmod +x package_binary.sh
+          ./package_binary.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.meta.outputs.tool_id }}-${{ matrix.platform }}
+          path: |
+            executas/ledgerlens/dist-anna/${{ needs.meta.outputs.tool_id }}-${{ matrix.platform }}.tar.gz
+            executas/ledgerlens/dist-anna/${{ needs.meta.outputs.tool_id }}-${{ matrix.platform }}.tar.gz.sha256
+
+  release:
+    needs: [meta, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist-anna
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ledgerlens-v${{ needs.meta.outputs.version }}
+          name: LedgerLens v${{ needs.meta.outputs.version }}
+          files: dist-anna/*
+          body: |
+            LedgerLens executa binary v${{ needs.meta.outputs.version }}
+
+            Tool ID: `${{ needs.meta.outputs.tool_id }}`
+
+            Platforms: darwin-arm64, darwin-x86_64, linux-x86_64

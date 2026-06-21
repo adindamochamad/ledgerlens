@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tool-adindamochamad-ledgerlens-r2zhgf93"
+version = "0.2.0"
+description = "LedgerLens Executa — baca struk lokal, parse CSV bank, memori vendor"
+requires-python = ">=3.10"
+dependencies = [
+  "pdfplumber>=0.10.0",
+  "Pillow>=10.0.0",
+]
+
+[project.scripts]
+"tool-adindamochamad-ledgerlens-r2zhgf93" = "ledgerlens_plugin:main"
+
+[tool.setuptools]
+py-modules = ["ledgerlens_plugin"]
