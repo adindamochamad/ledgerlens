@@ -883,6 +883,66 @@ async function handleMulaiRekonsiliasi() {
 }
 
 // =====================================================================
+// ONBOARDING: Muat data contoh (1 klik, tanpa setup folder/CSV)
+// Mengisi dashboard dengan dataset demo 5 cocok / 1 mismatch / 3 tanpa
+// struk supaya pengguna baru langsung paham cara kerja rekonsiliasi.
+// Konsisten dengan demo/struk_pdf/mutasi.csv (cerita Rp 1.650.000).
+// =====================================================================
+
+const DATA_CONTOH = [
+  { id_transaksi: "DEMO01", tanggal: "2024-01-05", keterangan: "INDOMARET 12345 JAKARTA", jenis: "debit", jumlah: 156000, debit: 156000, kredit: 0, kategori_ai: "Daily Shopping", status_rekonsiliasi: "cocok", catatan_ai: "Matched with indomaret.pdf.", struk_terpasang: "indomaret.pdf" },
+  { id_transaksi: "DEMO02", tanggal: "2024-01-10", keterangan: "SHELL SPBU SUDIRMAN", jenis: "debit", jumlah: 350000, debit: 350000, kredit: 0, kategori_ai: "Fuel", status_rekonsiliasi: "cocok", catatan_ai: "Matched with shell_spbu.pdf.", struk_terpasang: "shell_spbu.pdf" },
+  { id_transaksi: "DEMO03", tanggal: "2024-01-14", keterangan: "ALFAMART 9876", jenis: "debit", jumlah: 67500, debit: 67500, kredit: 0, kategori_ai: "Daily Shopping", status_rekonsiliasi: "cocok", catatan_ai: "Matched with alfamart.pdf.", struk_terpasang: "alfamart.pdf" },
+  { id_transaksi: "DEMO04", tanggal: "2024-01-15", keterangan: "ATM TARIK TUNAI", jenis: "debit", jumlah: 1000000, debit: 1000000, kredit: 0, kategori_ai: "Cash Withdrawal", status_rekonsiliasi: "tanpa_struk", catatan_ai: "No receipt found for this transaction." },
+  { id_transaksi: "DEMO05", tanggal: "2024-01-18", keterangan: "PLN PREPAID TOKEN", jenis: "debit", jumlah: 200000, debit: 200000, kredit: 0, kategori_ai: "Utilities", status_rekonsiliasi: "cocok", catatan_ai: "Matched with pln.pdf.", struk_terpasang: "pln.pdf" },
+  { id_transaksi: "DEMO06", tanggal: "2024-01-20", keterangan: "TOKOPEDIA*GADGET", jenis: "debit", jumlah: 1250000, debit: 1250000, kredit: 0, kategori_ai: "Online Shopping", status_rekonsiliasi: "mismatch", catatan_ai: "Receipt Rp 1.100.000 ≠ bank Rp 1.250.000.", struk_terpasang: "tokopedia.pdf" },
+  { id_transaksi: "DEMO07", tanggal: "2024-01-22", keterangan: "GOJEK GOCAR", jenis: "debit", jumlah: 45000, debit: 45000, kredit: 0, kategori_ai: "Transportation", status_rekonsiliasi: "cocok", catatan_ai: "Matched with gojek.pdf.", struk_terpasang: "gojek.pdf" },
+  { id_transaksi: "DEMO08", tanggal: "2024-01-24", keterangan: "SHOPEE*8842JKT", jenis: "debit", jumlah: 420000, debit: 420000, kredit: 0, kategori_ai: "Online Shopping", status_rekonsiliasi: "tanpa_struk", catatan_ai: "No receipt found for this transaction." },
+  { id_transaksi: "DEMO09", tanggal: "2024-01-27", keterangan: "GRAB* FOOD", jenis: "debit", jumlah: 230000, debit: 230000, kredit: 0, kategori_ai: "Food & Beverages", status_rekonsiliasi: "tanpa_struk", catatan_ai: "No receipt found for this transaction." },
+];
+
+function muatDataContoh() {
+  // Klon agar render path tidak memutasi konstanta sumber
+  const contoh = DATA_CONTOH.map((t) => ({ ...t }));
+  const fileStruk = ["indomaret.pdf", "shell_spbu.pdf", "alfamart.pdf", "pln.pdf", "tokopedia.pdf", "gojek.pdf"]
+    .map((nama) => ({ nama_file: nama, tipe: "pdf", ukuran_kb: 12 }));
+  const totalDebit = contoh.reduce((s, t) => s + (t.debit || 0), 0);
+
+  statusAplikasi.hasilRekonsiliasi = contoh;
+  statusAplikasi.transaksiBank = contoh;
+  statusAplikasi.daftarFilStruk = fileStruk;
+  statusAplikasi.antrianReview = contoh.filter((t) =>
+    ["ambigu", "mismatch"].includes(t.status_rekonsiliasi)
+  );
+
+  // Stat panel kiri (struk + CSV + bank) agar konsisten dengan dataset demo
+  el.jumlahStruk.textContent = fileStruk.length;
+  el.jumlahCsv.textContent = 1;
+  el.ukuranTotal.textContent = (2100).toLocaleString("en-US");
+  el.jumlahTransaksiBank.textContent = contoh.length;
+  el.totalDebit.textContent = formatRupiah(totalDebit);
+  tampilkan_elemen(el.hasilScanFolder);
+  tampilkan_elemen(el.hasilMuatCsv);
+  sembunyikan_elemen(el.peringatanFolder);
+
+  // Tandai semua langkah selesai
+  tandaiStepSelesai("langkah-folder");
+  tandaiStepSelesai("langkah-csv");
+  tandaiStepSelesai("langkah-rekonsiliasi");
+
+  // Render dashboard (jalur yang sama dengan rekonsiliasi nyata)
+  perbaruiStatistikRekonsiliasi();
+  renderTabelTransaksi();
+  renderAntrianReview();
+  renderDaftarTanpaStruk();
+  tampilkan_elemen(el.panelStatistik);
+  sembunyikan_elemen(el.placeholderTabel);
+  tampilkan_elemen(el.kontainerTabelUtama);
+
+  tampilkan_toast("Sample data loaded — this is a demo dataset, no AI was run.", "info");
+}
+
+// =====================================================================
 // RENDER: Statistik Rekonsiliasi
 // =====================================================================
 
@@ -1388,3 +1448,4 @@ window.konfirmasiKategori = konfirmasiKategori;
 window.tandaiStatus = tandaiStatus;
 window.tutupModal = tutupModal;
 window.kirimRingkasanKeChat = kirimRingkasanKeChat;
+window.muatDataContoh = muatDataContoh;
