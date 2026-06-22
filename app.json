@@ -1,8 +1,8 @@
 {
   "slug": "ledgerlens",
   "name": "LedgerLens",
-  "tagline": "Rekonsiliasi struk & mutasi bank — siap audit pajak dalam hitungan detik.",
-  "description": "LedgerLens membaca folder struk (PDF/foto) dan CSV mutasi bank di mesin kamu — data tetap lokal. AI mencocokkan transaksi dengan bukti struk, mendeteksi mismatch, dan membangun memori vendor yang belajar setiap bulan.",
+  "tagline": "Reconcile receipts & bank statements — audit-ready in seconds.",
+  "description": "LedgerLens reads your receipt folder (PDF/photo) and bank statement CSV right on your machine — your data never leaves. AI matches each transaction to its receipt proof, flags amount mismatches and missing receipts, and builds a vendor memory that gets smarter every month.",
   "category": "productivity",
   "pricing_model": "free"
 }

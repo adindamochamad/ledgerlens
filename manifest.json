@@ -29,7 +29,7 @@
         "default_size": { "w": 1100, "h": 680 },
         "min_size": { "w": 800, "h": 500 },
         "single_instance": true,
-        "summary_template": "Rekonsiliasi struk & mutasi bank"
+        "summary_template": "Receipt & bank statement reconciliation"
       }
     ],
     "host_api": {
