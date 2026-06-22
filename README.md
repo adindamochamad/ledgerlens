@@ -1,209 +1,123 @@
-# 🔍 LedgerLens
+<p align="center">
+  <img src="assets/logo.png" width="120" alt="LedgerLens logo" />
+</p>
 
-> **Rekonsiliasi struk & mutasi bank — siap audit pajak dalam hitungan detik.**
+<h1 align="center">LedgerLens</h1>
 
-LedgerLens adalah Anna App untuk rekonsiliasi keuangan pribadi/usaha kecil.
-Drop folder berisi 50 struk + 1 CSV bank → AI mencocokkan semua transaksi
-→ "3 transaksi tanpa struk = risiko audit" → kamu review yang ambigu → selesai.
-
-Data tetap di mesin kamu. Tidak ada yang dikirim ke server manapun.
-
----
-
-## Cara Pakai (Pengguna)
-
-1. Install LedgerLens dari Anna App Store
-2. Di chat Anna, ketik: `#ledgerlens`
-3. Anna akan buka dashboard dan memandu kamu:
-   - Masukkan path folder struk kamu
-   - Masukkan path file CSV mutasi bank
-   - Klik **Mulai Rekonsiliasi**
-4. Review transaksi ambigu di panel kanan
-5. Export laporan rekonsiliasi (JSON/CSV)
+<p align="center">
+  <b>Reconcile receipts &amp; bank statements — audit-ready in seconds, fully on your machine.</b>
+</p>
 
 ---
 
-## Setup Development
+## What it is
 
-### Prasyarat
+LedgerLens is an [Anna](https://anna.partners) App that reconciles purchase
+receipts against a bank statement — the tedious monthly chore behind every tax
+filing. Point it at a local folder of receipts and a bank statement CSV, click
+once, and the AI reads each receipt, matches it to the right bank transaction,
+flags amount mismatches and transactions with **no receipt at all**, and gives
+you the bottom line:
 
-- Python 3.9+
-- Anna Desktop (untuk test integrasi penuh)
+> **"3 transactions worth Rp 1,650,000 have no proof = tax audit risk."**
 
-### Instalasi
+Everything runs locally through Anna's Executa — your financial data never leaves
+your computer. A persistent vendor memory makes categorization smarter every month.
 
-```bash
-# Clone repo
-git clone https://github.com/YOUR_USERNAME/ledgerlens
-cd ledgerlens
+## Who it's for
 
-# Jalankan setup otomatis
-chmod +x setup.sh && ./setup.sh
+Freelancers, small-shop owners, and online sellers who keep their own books and
+need a clean, audit-ready summary — without uploading sensitive data to the cloud
+or paying for heavyweight accounting software.
 
-# Verifikasi tool berjalan dengan benar
-chmod +x smoke_test.sh && ./smoke_test.sh
-```
-
-### Test Manual Tool
-
-```bash
-source .venv/bin/activate
-
-# Test describe
-echo '{"jsonrpc":"2.0","id":1,"method":"describe"}' | python3 tools/main.py
-
-# Test ringkasan_folder
-echo '{"jsonrpc":"2.0","id":1,"method":"describe"}
-{"jsonrpc":"2.0","id":2,"method":"invoke","params":{"tool":"ringkasan_folder","arguments":{"path_folder":"/Users/kamu/Dokumen/Struk"}}}' \
-  | python3 tools/main.py
-
-# Test parse_csv_bank
-echo '{"jsonrpc":"2.0","id":1,"method":"describe"}
-{"jsonrpc":"2.0","id":2,"method":"invoke","params":{"tool":"parse_csv_bank","arguments":{"path_file":"/Users/kamu/Downloads/mutasi.csv"}}}' \
-  | python3 tools/main.py
-```
-
-### Test UI Standalone
-
-Buka `ui/index.html` langsung di browser (tanpa Anna). App berjalan dalam
-mode dev dengan data contoh untuk verifikasi tampilan.
-
----
-
-## Struktur Proyek
+## How it works
 
 ```
-ledgerlens/
-├── tools/
-│   └── main.py          # Anna Tool: stdio JSON-RPC 2.0 server (Python)
-├── ui/
-│   ├── index.html       # App UI: halaman utama SPA
-│   ├── app.js           # Logika UI + integrasi Anna SDK
-│   └── styles.css       # Stylesheet
-├── docs/
-│   ├── STRATEGI.md      # Strategi hackathon & roadmap fitur
-│   └── ALUR_KERJA.md    # Diagram alur rekonsiliasi lengkap
-├── manifest.json        # Anna App manifest (schema: 2)
-├── requirements.txt     # Dependensi Python
-├── setup.sh             # Setup otomatis
-├── smoke_test.sh        # Verifikasi tool long-running
-└── README.md            # Dokumentasi ini
-```
-
----
-
-## Arsitektur
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     MESIN PENGGUNA                          │
-│                                                             │
-│  ┌──────────────┐    stdio    ┌────────────────────────┐   │
-│  │  Anna Agent  │◄──JSON-RPC─►│  LedgerLens Tool       │   │
-│  │  (LLM AI)    │             │  (Python 3, tools/)    │   │
-│  └──────┬───────┘             │                        │   │
-│         │                     │  • baca PDF/gambar     │   │
-│         │  iframe             │  • parse CSV bank      │   │
-│         ▼                     │  • simpan memori       │   │
-│  ┌──────────────┐             └──────────┬─────────────┘   │
-│  │  App UI      │                        │                  │
-│  │  (dashboard) │                        ▼                  │
-│  │  ui/         │             ┌────────────────────────┐   │
-│  └──────────────┘             │  File Lokal Pengguna   │   │
-│                               │  • Folder struk        │   │
-│                               │  • CSV mutasi bank     │   │
-│                               │  ~/.ledgerlens/        │   │
-│                               │    memori_vendor.json  │   │
-│                               └────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Alur Data
-
-```
-Pengguna input path folder + CSV
+You enter a receipt folder path + a bank CSV path
         │
         ▼
-[Tool] ringkasan_folder → ringkasan file
-[Tool] parse_csv_bank → daftar transaksi terstruktur
-[Tool] daftar_file_struk → daftar path struk
-[Tool] ambil_memori_vendor → konteks vendor yang dikenal
+[Executa]  scan folder · parse bank CSV · load vendor memory
         │
         ▼
-[AI Anna] baca setiap struk via baca_struk
-[AI Anna] ekstrak: vendor, tanggal, nominal dari struk
-[AI Anna] cocokkan struk ↔ transaksi bank
-[AI Anna] tandai status: cocok / tanpa_struk / ambigu / mismatch
+[AI]  read each receipt (llm.complete) → extract vendor / date / amount
+[AI]  match receipt ↔ bank transaction (vendor fuzzy · amount ±5% · date ±2d)
+[AI]  label: matched / no-receipt / ambiguous / mismatch
         │
         ▼
-[App UI] tampilkan tabel hasil
-[App UI] antrian human-review untuk ambigu
+[App UI]  summary dashboard + exception-based review queue
         │
         ▼
-[Pengguna] konfirmasi kategori
-[Tool] simpan_memori_vendor → pembelajaran persisten
-[Tool] simpan_hasil_rekonsiliasi → export JSON
+You confirm a category → vendor memory learns it for next month
 ```
 
----
+The UI button triggers the AI directly (UI → Executa reads files → LLM → results) —
+no copy-pasting anything into a chat.
 
-## Tool API Reference
+## Try it in one click
 
-| Tool | Deskripsi | Parameter Wajib |
-|------|-----------|-----------------|
-| `ringkasan_folder` | Ringkasan cepat folder struk | `path_folder` |
-| `daftar_file_struk` | Daftar semua file PDF/gambar | `path_folder` |
-| `baca_struk` | Baca isi struk (teks/base64) | `path_file` |
-| `parse_csv_bank` | Parse CSV mutasi bank | `path_file` |
-| `ambil_memori_vendor` | Ambil pemetaan vendor→kategori | — |
-| `simpan_memori_vendor` | Simpan kategori vendor baru | `vendor`, `kategori` |
-| `simpan_hasil_rekonsiliasi` | Export hasil ke JSON | `data_rekonsiliasi` |
+New here? Open the app and hit **"Try with sample data"** on the empty dashboard
+to see a full reconciliation (5 matched / 1 mismatch / 3 missing receipts)
+instantly — no folder setup required.
 
----
+## Why it needs Anna
+
+A web chatbot can't read a folder on your disk. LedgerLens couldn't exist without
+Anna's primitives:
+
+| Anna primitive | Used for |
+|---|---|
+| **Executa** (Python tool) | Local filesystem access — read a folder of receipts, parse the bank CSV |
+| **`llm.complete`** | The extraction brain (vendor / date / amount from receipt text) |
+| **`storage`** | Persistent vendor → category memory across sessions |
+| **App UI** | Summary-first dashboard with a human-review queue |
+
+## Install
+
+LedgerLens ships as a downloadable **binary** Executa (macOS ARM64 + Linux x86_64),
+so anyone can install it onto their Anna agent — no local dev setup needed. Install
+it from the Anna App Store; the agent auto-downloads the right binary for your platform.
+
+## Privacy
+
+100% local processing. No financial data is sent to external servers.
 
 ## Roadmap
 
-### v0.1 — Hackathon MVP (selesai)
-- [x] Tool Python: baca PDF/gambar, parse CSV, memori vendor
-- [x] App UI: dashboard rekonsiliasi, tab human-review, statistik
-- [x] Anna App manifest (schema 2 dengan UI)
-- [x] Mode dev standalone (tanpa Anna)
+- **Gmail receipt auto-import** — most receipts/invoices live in your inbox; pull
+  them in automatically instead of asking users to download files first.
+- **Recurring-subscription detection** — flag the silent monthly charges (SaaS,
+  streaming) people forget to cancel.
+- **Vision OCR** for photographed/scanned receipts (today: text-layer PDFs, since
+  `llm.complete` is text-only).
+- Export to Excel/CSV; more bank formats; per-period filters.
 
-### v0.2 — Rekonsiliasi AI-Driven (saat ini)
-- [x] Core brain dipindah dari heuristik frontend → seam AI (`rekonsiliasiAnna`)
-- [x] Iterasi struk sekuensial via Executa `baca_struk` + progress per file
-- [x] Integrasi `anna.llm.complete` (host_api LLM) untuk ekstraksi vendor/nominal/tanggal dari teks struk
-- [x] Matcher nominal ±5% / tanggal ±2 hari / vendor fuzzy → cocok/mismatch/ambigu/tanpa_struk
-- [x] Fallback offline (fixture + heuristik) agar demo tetap jalan tanpa host Anna
-- [ ] **Keterbatasan diketahui:** `llm.complete` text-only — struk gambar/scan belum bisa di-OCR via UI; hanya PDF ber-teks (vision via agent/chat = rencana v0.3)
-- [ ] Export ke Excel/CSV (bukan hanya JSON)
-- [ ] Dukungan format bank lebih banyak (BCA, Mandiri, BNI, BRI, OCBC)
-- [ ] Filter per periode (bulan/kuartal/tahun)
+## Build the binary from source
 
-### v0.3 — Vision & Fitur Lanjutan
-- [ ] OCR struk gambar via agent-session / chat-agent Anna (vision)
-- [ ] Generate laporan pajak ringkas (format PPh 21/25)
-- [ ] Integrasi dengan Google Drive / iCloud untuk sumber struk
-- [ ] Multi-currency support
-- [ ] Notifikasi bulanan ("Kamu punya X transaksi belum dikategorikan")
+```bash
+cd executas/ledgerlens
+./package_binary.sh          # PyInstaller one-file build for the current platform
+```
 
----
+CI (`.github/workflows/build-binary.yml`) builds darwin-arm64 + linux-x86_64 and
+attaches them to a GitHub Release on manual dispatch.
 
-## Kontribusi Hackathon
+## Project layout
 
-**Event:** Global Online Hackathon — Build AI Apps for the Rest of Us
-**Platform:** [Anna](https://anna.partners)
-**Deadline:** 22 Juni 2026, 23:59 ET
+```
+ledgerlens/
+├── executas/ledgerlens/
+│   ├── ledgerlens_plugin.py   # Executa: stdio JSON-RPC tool (file access, CSV, memory)
+│   ├── executa.json           # Executa identity + Binary distribution config
+│   └── package_binary.sh      # PyInstaller packaging
+├── ui/                        # App UI (source) — index.html · app.js · styles.css
+├── bundle/                    # App UI (shipped bundle; synced from ui/)
+├── demo/struk_pdf/            # 6 text-layer PDF receipts + mutasi.csv (the 5/1/3 demo)
+├── assets/logo.svg|png        # Brand logo
+├── docs/SUBMISSION.md         # Hackathon submission write-up
+├── manifest.json              # Anna App manifest (schema 2, declares host_api.llm)
+└── .github/workflows/         # Multi-platform binary build
+```
 
-**Mengapa LedgerLens layak menang:**
-- **Usefulness 9/10** — Jutaan UKM & freelancer menghadapi masalah ini menjelang pajak
-- **Fit Anna 9/10** — Butuh akses file lokal (hanya bisa via Anna Tool), state persisten, human-review
-- **ChatGPT Test 9/10** — ChatGPT tidak bisa akses folder lokal kamu
-- **Working Demo** — Langsung bisa demo dengan folder struk nyata
-- **"For the Rest of Us"** — Bukan untuk programmer, tapi untuk pemilik warung, freelancer, ibu rumah tangga yang jualan online
+## License
 
----
-
-## Lisensi
-
-MIT License — bebas digunakan dan dimodifikasi.
+MIT — free to use and modify.
