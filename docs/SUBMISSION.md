@@ -5,6 +5,7 @@
 **App:** LedgerLens — Receipt & Bank Statement Reconciliation
 **Platform:** Anna ("Build AI Apps for the Rest of Us")
 **Repo:** https://github.com/adindamochamad/ledgerlens
+**Demo video:** https://youtu.be/ZyvRNoM7QXU
 **Tool ID:** `tool-adindamochamad-ledgerlens-r2zhgf93` (Binary distribution: macOS ARM64 + Linux x86_64)
 
 ---
